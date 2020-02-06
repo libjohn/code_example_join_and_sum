@@ -19,28 +19,30 @@ knitr::opts_chunk$set(
 <!-- badges: start -->
 <!-- badges: end -->
 
-## Question
+### Question
 
 How to calculate variables from to differet tibbles and sum the results
 
-## Answer
+### Answer
 
 1. TRANSFORM: pivot the data from wide to long
 1. TRANSFORM: join the the two tables by the variable ID
 1. ANALYSIS: calculate the score
 1. ANALYSIS: sum the score
 
-## Details
+See the Rmd for **complete and working code example**:  [reprex_exmple.Rmd](https://github.com/libjohn/code_example_join_and_sum/blob/master/reprex_exmple.Rmd)
+
+## Summary details below...
 
 The following is a [Reprex](https://reprex.tidyverse.org/), i.e. a minimally reproducible example.
 
-## Load Library Package
+### Load Library Package
 
 ```{r message=FALSE, warning=FALSE}
 library(tidyverse)
 ```
 
-## Generate data from example procedure
+### Generate data from example procedure
 
 ```
 tl_snp$x1 <- tl_snp$rs10808746 * eff$rs10808746
@@ -62,7 +64,7 @@ tl_snp$x16 <- tl_snp$rs985421 *  eff$rs985421
 tl_snp$x17 <- tl_snp$rs9877502 * eff$rs9877502
 ```
 
-## Build Reprex data
+### Build Reprex data
 
 First, build toy tall table with random data and specific variable names, so that I can replicate the wide table from the original email.
 
@@ -97,7 +99,7 @@ tbl_snp_wide
 tbl_eff_wide
 ```
 
-### Pivot longer
+#### Pivot longer
 
 ["Tall" data](https://en.wikipedia.org/wiki/Wide_and_narrow_data) (a.k.a "long", a.k.a "narrow") is often easier or more convenient for calculations.
 
@@ -111,24 +113,24 @@ tbl_eff_tall <- tbl_eff_wide %>%
                names_to = "eff_var_name",
                values_to = "eff_value")
 
-tbl_snp_tall
-tbl_eff_tall
+head(tbl_snp_tall)
+head(tbl_eff_tall)
 ```
 
-## Combine tibbles 
+### Combine tibbles 
 
 Combine the column values from both tables for later manipulation
 
-### Easy
+#### Easy
 
 Using the `bind_cols()` function.  This is easy to do but each table must be the same size and the data must be in the same order.
 
 ```{r}
 big_tbl <- bind_cols(tbl_snp_tall, tbl_eff_tall)
-big_tbl
+head(big_tbl)
 ```
 
-### More precise via left_join
+#### More precise via left_join
 
 Using a join function allows matching by data identifiers, before merging variable values.
 
@@ -138,21 +140,21 @@ There are different types of `join` functions (see [dplyr](https://dplyr.tidyver
 ```{r}
 join_tbl <- left_join(tbl_snp_tall, tbl_eff_tall, by = c("snp_var_name" = "eff_var_name"))
 
-join_tbl
+head(join_tbl)
 ```
 
-## Calculate new variable
+### Calculate new variable
 
 score = snp_value * eff_value
 
 ```{r}
 join_tbl <- join_tbl %>% 
   mutate(score = snp_value * eff_value)
-join_tbl
 
+head(join_tbl)
 ```
 
-## Column totals
+### Column totals
 
 Row totals
 
@@ -163,11 +165,6 @@ join_tbl %>%
 
 
 
-```
-joined_tbl %>% 
-  mutate(score = snp_value * eff_value)%>% 
-  summarize(total_score = sum(score))
-```
 
 
 

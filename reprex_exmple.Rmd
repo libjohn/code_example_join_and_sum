@@ -134,10 +134,4 @@ join_tbl %>%
 
 
 
-```
-joined_tbl %>% 
-  mutate(score = snp_value * eff_value)%>% 
-  summarize(total_score = sum(score))
-```
-
 
