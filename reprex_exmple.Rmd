@@ -133,5 +133,30 @@ join_tbl %>%
 ```
 
 
+## Alternative without join
 
+uses `bind_rows` function which means all the column names must be the same.
+
+```{r}
+bind_rows(tbl_snp_wide %>%
+            mutate(var_type = "snp"),
+          tbl_eff_wide %>% 
+            mutate(var_type = "eff")) %>% 
+  pivot_longer(starts_with("rs"), 
+               names_to = "var_name",
+               values_to = "var")  %>% 
+    group_by(var_name) %>% 
+    summarise(score = prod(var)) %>% 
+    summarise(tot_score = sum(score))
+```
+
+```{r}
+bind_rows(tbl_snp_wide, tbl_eff_wide) %>% 
+  pivot_longer(starts_with("rs"), 
+               names_to = "var_name",
+               values_to = "var")  %>% 
+    group_by(var_name) %>% 
+    summarise(score = prod(var)) %>% 
+    summarise(tot_score = sum(score))
+```
 
