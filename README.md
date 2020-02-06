@@ -15,7 +15,28 @@ John Little
 
 How to calculate variables from to differet tibbles and sum the results
 
-### Answer
+### Answer 1
+
+As long as all the column names are consistent across tibbles, and the
+tibble consist of only the columns to be multipled and then summed, the
+most efficient is to `bind_rows`, then pivot long followed by the
+analysis (summarize by multiplying the grouped variables, and finally
+summarize by summing the products.)
+
+``` r
+bind_rows(tbl_snp_wide, tbl_eff_wide) %>% 
+  pivot_longer(starts_with("rs"), 
+               names_to = "var_name",
+               values_to = "var")  %>% 
+    group_by(var_name) %>% 
+    summarise(score = prod(var)) %>% 
+    summarise(tot_score = sum(score))
+```
+
+This works but I haven’t produced the reprex data yet so I’ll repeat
+this at the bottom of this file.
+
+### Answer 2
 
 1.  TRANSFORM: pivot the data from wide to long
 2.  TRANSFORM: join the the two tables by the variable ID
@@ -223,4 +244,22 @@ join_tbl %>%
 #>   total_score
 #>         <dbl>
 #> 1     928076.
+```
+
+## Quickest
+
+Again, the below is a repeat of the first answer.
+
+``` r
+bind_rows(tbl_snp_wide, tbl_eff_wide) %>% 
+  pivot_longer(starts_with("rs"), 
+               names_to = "var_name",
+               values_to = "var")  %>% 
+    group_by(var_name) %>% 
+    summarise(score = prod(var)) %>% 
+    summarise(tot_score = sum(score))
+#> # A tibble: 1 x 1
+#>   tot_score
+#>       <dbl>
+#> 1   928076.
 ```
