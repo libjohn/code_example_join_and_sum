@@ -1,0 +1,143 @@
+---
+title: "Reprex solution"
+output: html_notebook
+---
+
+The following is a [Reprex](https://reprex.tidyverse.org/), i.e. a minimally reproducible example.
+
+## Load Library Package
+
+```{r}
+library(tidyverse)
+```
+
+## Generate data from example procedure
+
+```
+tl_snp$x1 <- tl_snp$rs10808746 * eff$rs10808746
+tl_snp$x2 <- tl_snp$rs11556505 * eff$rs11556505
+tl_snp$x3 <- tl_snp$rs2075650 *  eff$rs2075650
+tl_snp$x4 <- tl_snp$rs2143571 *  eff$rs2143571
+tl_snp$x5 <- tl_snp$rs2283228 *  eff$rs2283228
+tl_snp$x6 <- tl_snp$rs2896019 *  eff$rs2896019
+tl_snp$x7 <- tl_snp$rs429358  *  eff$rs429358
+tl_snp$x8 <- tl_snp$rs4402960 *  eff$rs4402960
+tl_snp$x9 <- tl_snp$rs6006611 *  eff$rs6006611
+tl_snp$x10 <- tl_snp$rs738409 *  eff$rs738409
+tl_snp$x11 <- tl_snp$rs7412 *    eff$rs7412
+tl_snp$x12 <- tl_snp$rs7901695 * eff$rs7901695
+tl_snp$x13 <- tl_snp$rs8181588 * eff$rs8181588
+tl_snp$x14 <- tl_snp$rs9331888 * eff$rs9331888
+tl_snp$x15 <- tl_snp$rs9331942 * eff$rs9331942
+tl_snp$x16 <- tl_snp$rs985421 *  eff$rs985421
+tl_snp$x17 <- tl_snp$rs9877502 * eff$rs9877502
+```
+
+## Build Reprex data
+
+First, build toy tall table with random data and specific variable names, so that I can replicate the wide table from the original email.
+
+```{r}
+
+var_name <- c("rs10808746", "rs11556505", "rs2075650",
+              "rs2143571", "rs2283228", "rs2896019",
+              "rs429358", "rs4402960", "rs6006611",
+              "rs738409", "rs7412", "rs7901695",
+              "rs8181588", "rs9331888", "rs9331942",
+              "rs985421", "rs9877502")
+
+var_val_1 <- seq(length.out = 17, by = 18.6)
+var_val_2 <- seq(length.out = 17, by = 33.1)
+
+tbl_snp <- tibble(var_name, var_val_1)
+tbl_eff <- tibble(var_name, var_val_2)
+
+tbl_snp_wide <- tbl_snp %>% 
+  pivot_wider(names_from = var_name,
+              values_from = var_val_1)
+
+tbl_eff_wide <- tbl_eff %>% 
+  pivot_wider(names_from = var_name,
+              values_from = var_val_2)
+```
+
+Example data similar to that discussed in the email
+
+```{r}
+tbl_snp_wide
+tbl_eff_wide
+```
+
+### Pivot longer
+
+["Tall" data](https://en.wikipedia.org/wiki/Wide_and_narrow_data) (a.k.a "long", a.k.a "narrow") is often easier or more convenient for calculations.
+
+```{r}
+tbl_snp_tall <- tbl_snp_wide %>% 
+  pivot_longer(starts_with("rs"), 
+               names_to = "snp_var_name", 
+               values_to = "snp_value")
+tbl_eff_tall <- tbl_eff_wide %>% 
+  pivot_longer(starts_with("rs"), 
+               names_to = "eff_var_name",
+               values_to = "eff_value")
+
+tbl_snp_tall
+tbl_eff_tall
+```
+
+## Combine tibbles 
+
+Combine the column values from both tables for later manipulation
+
+### Easy
+
+Using the `bind_cols()` function.  This is easy to do but each table must be the same size and the data must be in the same order.
+
+```{r}
+big_tbl <- bind_cols(tbl_snp_tall, tbl_eff_tall)
+big_tbl
+```
+
+### More precise via left_join
+
+Using a join function allows matching by data identifiers, before merging variable values.
+
+There are different types of `join` functions (see [dplyr](https://dplyr.tidyverse.org/reference/join.html).  In this case we want a `left_join()` -- most people want to do a left_join, but it makes sense to verify which type of join you need.
+
+
+```{r}
+join_tbl <- left_join(tbl_snp_tall, tbl_eff_tall, by = c("snp_var_name" = "eff_var_name"))
+
+join_tbl
+```
+
+## Calculate new variable
+
+score = snp_value * eff_value
+
+```{r}
+join_tbl <- join_tbl %>% 
+  mutate(score = snp_value * eff_value)
+join_tbl
+
+```
+
+## Column totals
+
+Row totals
+
+```{r}
+join_tbl %>% 
+  summarize(total_score = sum(score))
+```
+
+
+
+```
+joined_tbl %>% 
+  mutate(score = snp_value * eff_value)%>% 
+  summarize(total_score = sum(score))
+```
+
+
