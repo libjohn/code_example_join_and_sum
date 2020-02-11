@@ -1,0 +1,75 @@
+---
+title: "pivot tall and join"
+subtitle:  "with real data"
+author: "John Little"
+date: "Feb. 11, 2010"
+---
+
+
+## Load Library Package
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+```
+
+## Import Data
+
+```{r}
+snp <- read_csv("data/tl_snp.csv")
+eff <- read_csv("data/effectsize.csv")
+```
+
+```{r}
+snp
+eff
+```
+
+## Pivot Tall
+
+```{r}
+snp <- snp %>% 
+  pivot_longer(starts_with("rs"), 
+               names_to = "snp_var_name",
+               values_to = "snp_value")
+snp
+```
+
+
+```{r}
+eff <- eff %>% 
+  pivot_longer(starts_with("rs"), 
+               names_to = "eff_var_name",
+               values_to = "eff_value")
+eff
+```
+
+
+## Join & Mutate
+
+```{r}
+product <- left_join(snp, eff, by = c("snp_var_name" = "eff_var_name")) %>% 
+  mutate(product = snp_value * eff_value)
+product 
+
+```
+
+
+## Pivot back wider (optional)
+
+```{r}
+product %>% 
+  pivot_wider(product,
+              names_from = snp_var_name,
+              values_from = product) %>% 
+  unnest()
+```
+
+
+```{r}
+product %>% 
+  pivot_wider(source:agegroup2,
+              names_from = snp_var_name,
+              values_from = product) %>% 
+  unnest()
+```
+
