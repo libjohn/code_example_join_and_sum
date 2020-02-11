@@ -1,9 +1,7 @@
 ---
-title: "Reprex solution"
+title: "alex test"
 output: html_notebook
 ---
-
-The following is a [Reprex](https://reprex.tidyverse.org/), i.e. a minimally reproducible example.
 
 ## Load Library Package
 
@@ -83,23 +81,22 @@ tbl_snp_longer <-  bind_rows(tbl_snp_wide, tbl_snp3, tbl_snp4, tbl_snp5)
 tlb_eff_wide2 <- tbl_eff_wide
 ```
 
-Example data similar to that discussed in the email
+
+Tranform example data so that it is similar to the problem discussed last night.
+
+- tbl_eff_wide is 1 row and 17 variables
+- tbl_snp_longer is 4 rows with the same 17 variable names, plus some dummy starwars data added.  
 
 ```{r}
-tbl_snp_wide
-tbl_eff_wide
-tbl_snp_longer 
-head(starwars, 4)
-
-tbl_snp_longer <- bind_cols(head(starwars, 4), tbl_snp_longer)
-```
-
-
-```{r}
+tbl_snp_longer <- bind_cols(head(starwars, 4),  # skip step when replicating on real data
+                            tbl_snp_longer)     # skip step when replicating on real data
 tbl_eff_wide
 tbl_snp_longer
 ```
 
+## Pivot wide data so that it is truly long. 
+
+The end result is one tibble 65 rows by 15 variables.  The other tibble is 17 rows by 2 columns
 
 ```{r}
 snp_tall_too <- tbl_snp_longer %>% 
@@ -115,104 +112,20 @@ eff_tall_too <- tbl_eff_wide %>%
 eff_tall_too
 ```
 
+## Join & Mutate
+
+Now Join by the "rs" variable name as the join key.  Then use `mutate` to perform the vecorized math.  Store the new answer in the variable `product`. 
+
 
 ```{r}
-left_join(snp_tall_too, eff_tall_too, by = c("snp_var_name" = "eff_var_name")) %>% 
+foo <- left_join(snp_tall_too, eff_tall_too, by = c("snp_var_name" = "eff_var_name")) %>% 
   mutate(product = snp_value * eff_value) %>% 
-  arrange(snp_var_name)
+  arrange(snp_var_name) %>% 
+  select(-films, -starships, -vehicles) %>% 
+  select(name, gender, eye_color, snp_var_name, snp_value, eff_value, product, everything())
+foo
+
+write_csv(foo, "my_new_data.csv")
 ```
 
-
-
-### Pivot longer
-
-["Tall" data](https://en.wikipedia.org/wiki/Wide_and_narrow_data) (a.k.a "long", a.k.a "narrow") is often easier or more convenient for calculations.
-
-```{r}
-tbl_snp_tall <- tbl_snp_wide %>% 
-  pivot_longer(starts_with("rs"), 
-               names_to = "snp_var_name", 
-               values_to = "snp_value")
-tbl_eff_tall <- tbl_eff_wide %>% 
-  pivot_longer(starts_with("rs"), 
-               names_to = "eff_var_name",
-               values_to = "eff_value")
-
-tbl_snp_tall
-tbl_eff_tall
-```
-
-## Combine tibbles 
-
-Combine the column values from both tables for later manipulation
-
-### Easy
-
-Using the `bind_cols()` function.  This is easy to do but each table must be the same size and the data must be in the same order.
-
-```{r}
-big_tbl <- bind_cols(tbl_snp_tall, tbl_eff_tall)
-big_tbl
-```
-
-### More precise via left_join
-
-Using a join function allows matching by data identifiers, before merging variable values.
-
-There are different types of `join` functions (see [dplyr](https://dplyr.tidyverse.org/reference/join.html).  In this case we want a `left_join()` -- most people want to do a left_join, but it makes sense to verify which type of join you need.
-
-
-```{r}
-join_tbl <- left_join(tbl_snp_tall, tbl_eff_tall, by = c("snp_var_name" = "eff_var_name"))
-
-join_tbl
-```
-
-## Calculate new variable
-
-score = snp_value * eff_value
-
-```{r}
-join_tbl <- join_tbl %>% 
-  mutate(score = snp_value * eff_value)
-join_tbl
-
-```
-
-## Column totals
-
-Row totals
-
-```{r}
-join_tbl %>% 
-  summarize(total_score = sum(score))
-```
-
-
-## Alternative without join
-
-uses `bind_rows` function which means all the column names must be the same.
-
-```{r}
-bind_rows(tbl_snp_wide %>%
-            mutate(var_type = "snp"),
-          tbl_eff_wide %>% 
-            mutate(var_type = "eff")) %>% 
-  pivot_longer(starts_with("rs"), 
-               names_to = "var_name",
-               values_to = "var")  %>% 
-    group_by(var_name) %>% 
-    summarise(score = prod(var)) %>% 
-    summarise(tot_score = sum(score))
-```
-
-```{r}
-bind_rows(tbl_snp_wide, tbl_eff_wide) %>% 
-  pivot_longer(starts_with("rs"), 
-               names_to = "var_name",
-               values_to = "var")  %>% 
-    group_by(var_name) %>% 
-    summarise(score = prod(var)) %>% 
-    summarise(tot_score = sum(score))
-```
 
